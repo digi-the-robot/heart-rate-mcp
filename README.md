@@ -169,7 +169,7 @@ Mentions are only ever sent on wake events, and `@everyone`/`@here` never ping.
 
 You need an access token with heart rate read access:
 
-- **Manual token:** go to <https://pulsoid.net/ui/keys> → *Create new token*. Pulsoid limits this to BRO accounts (paid, with a free trial).
+- **Manual token:** go to <https://pulsoid.net/ui/keys> → *Create new token*. Pulsoid's docs list this as a BRO feature, but free accounts have been able to create one too, so try it first.
 - **Browser login:** `python run.py pulsoid-login` uses Pulsoid's device login and saves the token into `config.toml`. It needs an OAuth client ID from Pulsoid, set as `pulsoid.client_id` in the config or `PULSOID_CLIENT_ID` in `hrbridge/cli.py`.
 
 ```toml

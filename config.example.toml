@@ -22,9 +22,9 @@ log_file = "hrbridge.log"
 
 
 [pulsoid]
-# Get one at https://pulsoid.net/ui/keys ("Create new token"; needs Pulsoid BRO,
-# which has a free trial), or run `python run.py pulsoid-login` if this copy has
-# an OAuth client ID set up.
+# Get one at https://pulsoid.net/ui/keys ("Create new token"; works on free
+# accounts too, despite the docs calling it a BRO feature), or run
+# `python run.py pulsoid-login` if this copy has an OAuth client ID set up.
 token = ""
 # Also read the sensor's battery level, if the token is allowed to.
 battery = true
