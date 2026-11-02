@@ -1,0 +1,7 @@
+aiohttp>=3.9
+mcp>=1.2
+tomli>=2.0; python_version < "3.11"
+# Optional: Bluetooth heart rate monitors ("ble" source)
+bleak>=0.22
+# Optional: OSC input ("osc" source)
+python-osc>=1.8

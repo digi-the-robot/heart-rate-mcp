@@ -1,0 +1,13 @@
+# Your settings (tokens, webhook URLs)
+config.toml
+*.log
+*.log.*
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/

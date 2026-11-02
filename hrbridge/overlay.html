@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Heart rate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: transparent;
+         font: 600 16px/1.2 system-ui, sans-serif; color: #f4f4f5; }
+  .card { text-align: center; padding: 24px 36px; border-radius: 20px; background: rgba(20, 20, 24, .72); }
+  .bpm { font-size: 96px; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 16px; }
+  .heart { color: #ef4444; font-size: 64px; animation: beat 1s infinite; }
+  .unit { font-size: 28px; opacity: .7; }
+  .info { margin-top: 8px; font-weight: 400; opacity: .75; max-width: 28em; }
+  .stale .bpm { opacity: .4; } .stale .heart { animation: none; color: #71717a; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } }
+</style>
+</head>
+<body>
+<div class="card stale" id="card">
+  <div class="bpm"><span class="heart" id="heart">♥</span><span id="bpm">--</span><span class="unit">bpm</span></div>
+  <div class="info" id="info">connecting…</div>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  async function poll() {
+    try {
+      const r = await fetch("/api/heart_rate", { cache: "no-store" });
+      const d = await r.json();
+      $("bpm").textContent = d.bpm ?? "--";
+      $("info").textContent = d.summary;
+      $("card").classList.toggle("stale", d.status !== "live");
+      if (d.bpm) $("heart").style.animationDuration = (60 / d.bpm) + "s";
+    } catch (e) {
+      $("info").textContent = "bridge not running";
+      $("card").classList.add("stale");
+    }
+  }
+  poll();
+  setInterval(poll, 1000);
+</script>
+</body>
+</html>

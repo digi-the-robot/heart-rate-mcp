@@ -1,0 +1,134 @@
+# Heart rate bridge config. Copy this to config.toml (or run `python run.py init`).
+# config.toml is git-ignored, so your tokens and webhook URLs stay private.
+#
+# Any text value can pull from an environment variable: token = "${PULSOID_TOKEN}"
+
+# Where the heart rate comes from. List more than one to get fallbacks: the
+# first one that's sending data wins.
+#   pulsoid   Pulsoid app/watch/strap (token below)
+#   hyperate  HypeRate (API key + session ID below)
+#   ble       a Bluetooth heart rate strap or watch, read directly by this PC
+#   osc       OSC messages from an HR app (the kind sent to VRChat)
+#   http      phone/watch apps that POST to http://<this PC>:47820/api/push
+#   file      a text file that some app keeps rewriting with the current bpm
+#   simulate  fake data, for trying things out
+sources = ["pulsoid"]
+
+# How much history to keep in memory for get_heart_rate_history.
+history_hours = 6
+
+# Log file for the background daemon (relative to this file's folder).
+log_file = "hrbridge.log"
+
+
+[pulsoid]
+# Get one at https://pulsoid.net/ui/keys ("Create new token"; needs Pulsoid BRO,
+# which has a free trial), or run `python run.py pulsoid-login` if this copy has
+# an OAuth client ID set up.
+token = ""
+# Also read the sensor's battery level, if the token is allowed to.
+battery = true
+
+
+[hyperate]
+# Request an API key at https://www.hyperate.io/api
+api_key = ""
+# The ID shown in your HypeRate app / overlay URL.
+session_id = ""
+
+
+[ble]
+# Part of the device's name ("Polar H10") or its address. Empty = the first
+# heart rate monitor found. `python run.py scan` lists what's nearby.
+device = ""
+scan_seconds = 10
+
+
+[osc]
+# Point your HR app's OSC output here. Avoid 9000/9001 (VRChat's ports).
+host = "127.0.0.1"
+port = 9100
+# addresses = ["/avatar/parameters/HR", "/avatar/parameters/HeartRate"]
+
+
+[file]
+path = ""
+poll_seconds = 1
+
+
+[simulate]
+baseline = 72
+
+
+[events]
+# When the reading counts as "stale" (signal lost) for Claude's tools.
+stale_after_seconds = 15
+# How long it must stay silent before a "disconnected" post (so a strap that
+# slips for a few seconds doesn't spam the channel).
+disconnect_after_seconds = 60
+# "change": post when bpm moves this far from the last posted value. 0 = off.
+change_threshold = 10
+# "zone": post when crossing one of these, up or down.
+zones = [100, 120, 140]
+zone_hysteresis = 3
+# "spike": a rise of at least spike_bpm within spike_window_seconds.
+spike_bpm = 20
+spike_window_seconds = 30
+# "summary": a recap every N minutes while the sensor is live. 0 = off.
+summary_minutes = 0
+
+
+# Discord webhooks. Copy the block for more channels. Bots in the channel see
+# these posts without having to call a tool.
+# (Channel settings > Integrations > Webhooks > New Webhook > Copy URL)
+#
+# [[discord]]
+# url = "https://discord.com/api/webhooks/..."
+# # Which events to post: connected, disconnected, change, zone, spike, summary
+# events = ["connected", "disconnected", "change", "zone", "spike", "summary"]
+# # Minimum seconds between change/zone posts (spikes have their own timer).
+# cooldown_seconds = 60
+# # username = "Heart Rate"        # defaults to the webhook's own name
+# # avatar_url = ""
+# # prefix = ""                    # put in front of every post
+#
+# # Many Discord bots ignore messages from webhooks. If yours only reacts to
+# # webhook posts with a marker, or only to mentions, list the events that should
+# # wake it and what to add:
+# # wake_events = ["spike"]
+# # wake_prefix = "[EMBODIMENT]"
+# # mention = "<@123456789012345678>"
+#
+# # Change the wording. Fields: {bpm} {source} {time}, plus per event:
+# #   change: {from_bpm} {delta}   zone_up/zone_down: {threshold} {zone}
+# #   spike: {from_bpm} {delta} {seconds}   disconnected: {last_seen} {silent_seconds}
+# #   summary: {minutes} {avg} {min} {max} {trend}
+# # [discord.templates]
+# # change = "💓 **HR:** {bpm} bpm"
+
+
+# Generic webhooks: POST a JSON object for each event to any URL
+# (Home Assistant, n8n, your own bot...). Body:
+# {"type": "spike", "time": "...", "bpm": 112, "source": "pulsoid", ..., "text": "⚡ ..."}
+#
+# [[webhooks]]
+# url = "http://localhost:8123/api/webhook/heart-rate"
+# events = ["zone", "spike"]
+# cooldown_seconds = 0
+# headers = { Authorization = "Bearer ..." }
+
+
+[api]
+# Local HTTP API + live page. The MCP server talks to the daemon through this.
+# Use host = "0.0.0.0" only if a phone needs to reach the "http" source, and
+# set push_token then.
+host = "127.0.0.1"
+port = 47820
+push_token = ""
+
+
+[mcp]
+# auto      use the background daemon, starting it if needed (recommended)
+# connect   use a daemon you start yourself; never start one
+# embedded  read the sensor inside the MCP server (no daemon, no webhooks)
+daemon = "auto"
