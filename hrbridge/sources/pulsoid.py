@@ -46,7 +46,8 @@ class PulsoidSource(Source):
                     return
                 if e.status in (401, 403):
                     raise SourceConfigError(
-                        f"Pulsoid rejected the token (HTTP {e.status}). It may be mistyped, revoked, or expired"
+                        f"Pulsoid rejected the token (HTTP {e.status}). It may be mistyped, revoked, or expired. "
+                        "A widget ID (from a pulsoid.net/widget/view/... link) looks similar but isn't a token"
                     ) from e
                 raise SourceError(f"Pulsoid handshake failed (HTTP {e.status})") from e
             async with ws:
