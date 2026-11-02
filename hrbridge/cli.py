@@ -19,7 +19,7 @@ from .config import REPO_ROOT, Config, ConfigError, load_config, user_config_dir
 log = logging.getLogger("hrbridge")
 
 # Pulsoid OAuth client used by `hrbridge pulsoid-login` (device flow), so people
-# without a BRO plan can still get a token. Empty until the project registers
+# can log in through the browser instead of copying a token. Empty until the project registers
 # one with Pulsoid; pulsoid.client_id in the config overrides it.
 PULSOID_CLIENT_ID = ""
 PULSOID_SCOPES = "data:heart_rate:read,data:battery_level:read"
@@ -197,7 +197,7 @@ def cmd_pulsoid_login(cfg: Config, args) -> int:
         print(
             "One-click Pulsoid login isn't set up in this copy (no OAuth client ID).\n\n"
             "Get a token manually instead:\n"
-            "  1. Open https://pulsoid.net/ui/keys (needs Pulsoid BRO, which has a free trial)\n"
+            "  1. Open https://pulsoid.net/ui/keys (free accounts can usually do this too)\n"
             "  2. Click 'Create new token' and copy it\n"
             "  3. Put it in config.toml under [pulsoid] as token = \"...\" (or set PULSOID_TOKEN)\n\n"
             "If you have a Pulsoid OAuth client ID, pass it with --client-id or set pulsoid.client_id."
