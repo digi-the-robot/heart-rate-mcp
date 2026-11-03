@@ -112,6 +112,7 @@ One small background process (the **daemon**) holds the sensor connection and se
 You don't have to start the daemon yourself. The first MCP server to launch starts it, and it keeps running after that client closes. If you change the code or `config.toml`, the next MCP launch restarts it with the new settings. To run it by hand (e.g. for webhooks with no Claude client open):
 
 ```bash
+python run.py start     # in the background (keeps running after you close the window)
 python run.py run       # foreground, Ctrl+C to stop
 python run.py status    # what's it doing?
 python run.py stop

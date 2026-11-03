@@ -1,4 +1,4 @@
-"""Command line: hrbridge run | mcp | status | stop | check | scan | pulsoid-login | init"""
+"""Command line: hrbridge run | start | mcp | status | stop | check | scan | pulsoid-login | init"""
 
 from __future__ import annotations
 
@@ -64,6 +64,28 @@ def cmd_mcp(cfg: Config, args) -> int:
         log.warning("config: %s", w)
     run_mcp(cfg)
     return 0
+
+
+def cmd_start(cfg: Config, args) -> int:
+    """Start the daemon in the background (or restart it if its code/config is outdated)."""
+    from .daemon import DaemonClient, api_base, ensure_daemon
+
+    setup_logging(cfg, to_file=False, verbose=args.verbose, quiet_stderr=True)
+
+    async def go() -> int:
+        client = DaemonClient(cfg)
+        try:
+            hello = await ensure_daemon(cfg, client)
+        finally:
+            await client.close()
+        if not hello:
+            print(f"The bridge didn't start. Check {cfg.resolve(cfg.log_file)}.")
+            return 1
+        print(f"Bridge running in the background (pid {hello['pid']}). "
+              f"Live page: {api_base(cfg)}/  Stop it with: python run.py stop")
+        return 0
+
+    return asyncio.run(go())
 
 
 def cmd_status(cfg: Config, args) -> int:
@@ -308,6 +330,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--env-file", help=argparse.SUPPRESS)
     p = add("mcp", "run the MCP server on stdio (what Claude clients launch)")
     p.add_argument("--embedded", action="store_true", help="read the sensor in this process instead of the daemon")
+    add("start", "start the daemon in the background")
     add("status", "show the running daemon's state")
     add("stop", "stop the running daemon")
     p = add("check", "test webhooks, then print live readings")
@@ -337,7 +360,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Config problem: {e}", file=sys.stderr)
         sys.exit(2)
     handlers = {
-        "run": cmd_run, "mcp": cmd_mcp, "status": cmd_status, "stop": cmd_stop,
+        "run": cmd_run, "start": cmd_start, "mcp": cmd_mcp, "status": cmd_status, "stop": cmd_stop,
         "check": cmd_check, "scan": cmd_scan, "pulsoid-login": cmd_pulsoid_login,
     }
     sys.exit(handlers[args.command](cfg, args))
