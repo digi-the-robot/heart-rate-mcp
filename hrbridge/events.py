@@ -81,6 +81,11 @@ class EventDetector:
     def subscribe(self, fn: EventHandler) -> None:
         self._handlers.append(fn)
 
+    @property
+    def zone(self) -> int:
+        """Current zone index (0 = below every threshold), hysteresis applied."""
+        return self._zone
+
     def _emit(self, events: list[HREvent]) -> None:
         if not events:
             return

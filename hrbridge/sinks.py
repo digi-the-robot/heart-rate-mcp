@@ -14,24 +14,31 @@ import time
 import aiohttp
 
 from .config import DiscordSinkConfig, WebhookSinkConfig
-from .events import HREvent
+from .events import EventDetector, HREvent
 
 log = logging.getLogger("hrbridge.sinks")
 
-# change and zone share one cooldown so a crossing right after a change
-# doesn't double-post; the others are rate-limited separately.
-_COOLDOWN_GROUP = {"change": "value", "zone": "value", "spike": "spike"}
+_VALUE_EVENTS = ("change", "zone")
 
 
 class Poster:
+    """One webhook. Value posts (change / zone) are measured against the last
+    number this webhook actually posted, so the channel can't get stuck on an
+    old reading: when the cooldown ends, the current heart rate is posted if it
+    has moved far enough since (checked every second by tick())."""
+
     kind = "webhook"
     _MAX_QUEUE = 50
     _GAP = 0.5  # seconds between posts; Discord allows ~5 per 2 s per webhook
 
-    def __init__(self, cfg: DiscordSinkConfig | WebhookSinkConfig):
+    def __init__(self, cfg: DiscordSinkConfig | WebhookSinkConfig, detector: EventDetector | None = None):
         self.cfg = cfg
+        self.detector = detector
+        self.clock = time.monotonic
         self._queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=self._MAX_QUEUE)
         self._last: dict[str, float] = {}
+        self._shown_bpm: int | None = None   # last heart rate this webhook posted
+        self._shown_zone: int | None = None
         self._session: aiohttp.ClientSession | None = None
         self._task: asyncio.Task | None = None
         self.posted = 0
@@ -72,16 +79,70 @@ class Poster:
     def handle(self, events: list[HREvent]) -> None:
         """Pick the most important event this sink wants and queue it."""
         for event in events:
+            # Track the connection even when these events aren't posted, so
+            # value posts have a starting point.
+            if event.type == "connected":
+                self._remember(event)
+            elif event.type == "disconnected":
+                self._shown_bpm = self._shown_zone = None
             if event.type not in self.cfg.events:
                 continue
-            group = _COOLDOWN_GROUP.get(event.type)
-            if group is not None:
-                now = time.monotonic()
-                if now - self._last.get(group, float("-inf")) < self.cfg.cooldown_seconds:
+            if event.type in _VALUE_EVENTS:
+                if self.check_value():
+                    return
+                continue
+            if event.type == "spike":
+                now = self.clock()
+                if now - self._last.get("spike", float("-inf")) < self.cfg.cooldown_seconds:
                     continue
-                self._last[group] = now
-            self.enqueue(self.payload(event))
+                self._last["spike"] = now
+            self._post(event)
             return
+
+    def tick(self) -> None:
+        """Called every second: posts the catch-up value once a cooldown ends."""
+        self.check_value()
+
+    def check_value(self) -> bool:
+        """Post a change/zone update if the current heart rate has moved far
+        enough from what this webhook last showed, and the cooldown allows."""
+        det = self.detector
+        if det is None or self._shown_bpm is None:
+            return False
+        if not any(e in self.cfg.events for e in _VALUE_EVENTS):
+            return False
+        now = self.clock()
+        if now - self._last.get("value", float("-inf")) < self.cfg.cooldown_seconds:
+            return False
+        if det.state.status() != "live":
+            return False
+        t, bpm, source = det.state.latest()
+        zone, zones = det.zone, det.cfg.zones
+        threshold = det.cfg.change_threshold
+        if "zone" in self.cfg.events and self._shown_zone is not None and zone != self._shown_zone:
+            up = zone > self._shown_zone
+            event = HREvent("zone", t, bpm, source, {
+                "direction": "up" if up else "down",
+                "threshold": zones[zone - 1] if up else zones[zone],
+                "zone": zone, "from_zone": self._shown_zone,
+            })
+        elif "change" in self.cfg.events and threshold > 0 and abs(bpm - self._shown_bpm) >= threshold:
+            event = HREvent("change", t, bpm, source, {"from_bpm": self._shown_bpm, "delta": bpm - self._shown_bpm})
+        else:
+            return False
+        self._last["value"] = now
+        self._post(event)
+        return True
+
+    def _remember(self, event: HREvent) -> None:
+        if event.bpm is not None:
+            self._shown_bpm = event.bpm
+            self._shown_zone = self.detector.zone if self.detector is not None else None
+
+    def _post(self, event: HREvent) -> None:
+        if event.type != "disconnected":
+            self._remember(event)
+        self.enqueue(self.payload(event))
 
     def payload(self, event: HREvent) -> dict:
         return event.to_dict()

@@ -33,7 +33,8 @@ class Bridge:
         self.sources = [make_source(name, cfg, self.state) for name in cfg.sources]
         self.sinks: list[Poster] = []
         if run_sinks:
-            self.sinks = [DiscordPoster(c) for c in cfg.discord] + [WebhookPoster(c) for c in cfg.webhooks]
+            self.sinks = [DiscordPoster(c, self.detector) for c in cfg.discord] + \
+                         [WebhookPoster(c, self.detector) for c in cfg.webhooks]
             for sink in self.sinks:
                 self.detector.subscribe(sink.handle)
         self.build = build_id(cfg)
@@ -76,6 +77,11 @@ class Bridge:
         while True:
             await asyncio.sleep(1)
             self.detector.tick()
+            for sink in self.sinks:
+                try:
+                    sink.tick()
+                except Exception:
+                    log.exception("webhook tick failed")
 
     async def stop(self) -> None:
         for task in self._tasks:

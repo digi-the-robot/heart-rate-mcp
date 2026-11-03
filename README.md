@@ -142,6 +142,8 @@ What gets posted is controlled in `[events]`:
 | `spike` | rose `spike_bpm` within `spike_window_seconds` | +20 in 30 s |
 | `summary` | every `summary_minutes` while live | off |
 
+`cooldown_seconds` is the minimum gap between `change`/`zone` posts. If your heart rate keeps moving during the gap, the bridge posts where it ended up once the gap is over, so the channel never sits on an old number.
+
 Posts look like `💓 **HR:** 104 bpm, now above 100` or `⚡ **HR spike:** 72 → 98 bpm in 12s`. You can reword any of them with `[discord.templates]` (see `config.example.toml`).
 
 Add more `[[discord]]` blocks for more channels, each with its own events.

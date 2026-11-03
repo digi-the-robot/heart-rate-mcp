@@ -149,16 +149,15 @@ def test_discord_poster_wake_mentions_and_cooldown():
         cfg = DiscordSinkConfig(
             url=f"http://127.0.0.1:{port}/api/webhooks/1/tok", cooldown_seconds=60,
             wake_events=["spike"], wake_prefix="[EMBODIMENT]", mention="<@42>", username="HR",
-            templates={"change": "HR {bpm}"},
+            templates={"connected": "HR {bpm}"},
         )
         poster = DiscordPoster(cfg)
         poster._GAP = 0
         await poster.start()
         try:
-            poster.handle([HREvent("change", 0, 90, "pulsoid", {"from_bpm": 80, "delta": 10})])
-            poster.handle([HREvent("zone", 1, 101, "pulsoid", {"direction": "up", "threshold": 100, "zone": 1,
-                                                               "from_zone": 0})])  # cooldown: dropped
+            poster.handle([HREvent("connected", 0, 90, "pulsoid")])
             poster.handle([HREvent("spike", 2, 120, "pulsoid", {"from_bpm": 90, "delta": 30, "seconds": 10})])
+            poster.handle([HREvent("spike", 3, 125, "pulsoid", {"from_bpm": 90, "delta": 35, "seconds": 11})])
             await wait_for(lambda: len(posts) == 2)
             await asyncio.sleep(0.2)
         finally:

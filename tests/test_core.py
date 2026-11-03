@@ -4,8 +4,9 @@ import pytest
 
 from hrbridge.bridge import parse_bpm
 from hrbridge.cli import set_toml_value
-from hrbridge.config import REPO_ROOT, ConfigError, EventsConfig, load_config
+from hrbridge.config import REPO_ROOT, ConfigError, DiscordSinkConfig, EventsConfig, load_config
 from hrbridge.events import EventDetector
+from hrbridge.sinks import DiscordPoster
 from hrbridge.sources.ble import parse_measurement
 from hrbridge.state import HeartRateState
 
@@ -164,6 +165,59 @@ def test_summary_and_custom_template():
     assert ev.data["minutes"] == 1 and ev.data["min"] == 70 and ev.data["max"] == 72
     assert ev.render({"summary": "avg {avg}"}) == "avg 71"
     assert ev.render({"summary": "{nope}"}).startswith("💓 **Last 1 min:**")  # bad template falls back
+
+
+# --------------------------------------------------------------- webhooks
+
+def make_poster(cooldown=10.0, **events_kw):
+    state = HeartRateState(["s"], stale_after=15)
+    det = EventDetector(EventsConfig(**{"change_threshold": 5, "zones": [100, 120], "spike_bpm": 0, **events_kw}), state)
+    poster = DiscordPoster(DiscordSinkConfig(url="https://discord.com/api/webhooks/1/x", cooldown_seconds=cooldown,
+                                             templates={"change": "HR {bpm}"}), det)
+    clock = [0.0]
+    poster.clock = lambda: clock[0]
+    sent: list[str] = []
+    poster.enqueue = lambda payload: sent.append(payload["content"])
+    det.subscribe(poster.handle)
+
+    def at(seconds, bpm=None):
+        clock[0] = seconds
+        if bpm is None:
+            poster.tick()
+        else:
+            state.push("s", bpm)  # real time, so the reading counts as live
+
+    return at, sent
+
+
+def test_webhook_catches_up_after_a_climb_during_the_cooldown():
+    at, sent = make_poster(cooldown=10)
+    at(0, 80)
+    at(1, 85)                                    # posts: first move of 5
+    for i, bpm in enumerate(range(90, 125, 5)):  # 90..120 inside the gap: held back
+        at(2 + i, bpm)
+    at(9, 120)                                   # holds at 120
+    at(10)                                       # gap not over yet (posted at 1)
+    assert sent == ["💓 Heart rate connected (s): **80 bpm**", "HR 85"]
+    at(11.5)                                     # gap over: catch up to where HR is now
+    assert sent[-1] == "💓 **HR:** 120 bpm, now above 120"
+    at(30)
+    assert len(sent) == 3                        # still 120: nothing new to say
+    at(31, 112)                                  # dropped below 120 - 3
+    assert sent[-1] == "💓 **HR:** 112 bpm, back under 120"
+    at(32, 106)                                  # moved 6 but inside the gap
+    at(43)
+    assert sent[-1] == "HR 106"                  # caught up after the gap
+
+
+def test_webhook_skips_catch_up_when_hr_came_back():
+    at, sent = make_poster(cooldown=10)
+    at(0, 80)
+    at(1, 86)                     # posts 86
+    at(3, 95)                     # held back
+    at(5, 88)                     # back near 86 before the gap ends
+    at(12)
+    assert sent == ["💓 Heart rate connected (s): **80 bpm**", "HR 86"]
 
 
 # ---------------------------------------------------------- input parsing

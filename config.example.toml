@@ -87,6 +87,7 @@ summary_minutes = 0
 # # Which events to post: connected, disconnected, change, zone, spike, summary
 # events = ["connected", "disconnected", "change", "zone", "spike", "summary"]
 # # Minimum seconds between change/zone posts (spikes have their own timer).
+# # If HR keeps moving during the gap, where it ended up is posted when the gap is over.
 # cooldown_seconds = 60
 # # username = "Heart Rate"        # defaults to the webhook's own name
 # # avatar_url = ""
