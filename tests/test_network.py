@@ -148,7 +148,7 @@ def test_discord_poster_wake_mentions_and_cooldown():
         runner, port = await serve(app)
         cfg = DiscordSinkConfig(
             url=f"http://127.0.0.1:{port}/api/webhooks/1/tok", cooldown_seconds=60,
-            wake_events=["spike"], wake_prefix="[EMBODIMENT]", mention="<@42>", username="HR",
+            wake_events=["spike"], wake_prefix="[HEART]", mention="<@42>", username="HR",
             templates={"connected": "HR {bpm}"},
         )
         poster = DiscordPoster(cfg)
@@ -166,7 +166,7 @@ def test_discord_poster_wake_mentions_and_cooldown():
         assert posts[0]["content"] == "HR 90"
         assert posts[0]["allowed_mentions"] == {"parse": []}
         assert posts[0]["username"] == "HR"
-        assert posts[1]["content"].startswith("[EMBODIMENT] <@42> ⚡ **HR spike:** 90 → 120")
+        assert posts[1]["content"].startswith("[HEART] <@42> ⚡ **HR spike:** 90 → 120")
         assert posts[1]["allowed_mentions"] == {"parse": [], "users": ["42"]}
         assert len(posts) == 2
 

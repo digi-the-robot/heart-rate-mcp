@@ -15,6 +15,10 @@ dependencies = [
     "tomli>=2.0; python_version < '3.11'",
 ]
 
+[project.urls]
+Homepage = "https://github.com/digi-the-robot/claude-heart-rate-bridge"
+Issues = "https://github.com/digi-the-robot/claude-heart-rate-bridge/issues"
+
 [project.optional-dependencies]
 ble = ["bleak>=0.22"]
 osc = ["python-osc>=1.8"]

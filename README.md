@@ -36,7 +36,7 @@ List several and they become fallbacks: `sources = ["ble", "pulsoid"]` uses the 
 Needs Python 3.10 or newer.
 
 ```bash
-git clone https://github.com/<you>/claude-heart-rate-bridge
+git clone https://github.com/digi-the-robot/claude-heart-rate-bridge
 cd claude-heart-rate-bridge
 pip install -r requirements.txt
 python run.py init          # creates config.toml from config.example.toml

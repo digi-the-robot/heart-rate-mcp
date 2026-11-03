@@ -97,7 +97,7 @@ summary_minutes = 0
 # # webhook posts with a marker, or only to mentions, list the events that should
 # # wake it and what to add:
 # # wake_events = ["spike"]
-# # wake_prefix = "[EMBODIMENT]"
+# # wake_prefix = "[HEART]"
 # # mention = "<@123456789012345678>"
 #
 # # Change the wording. Fields: {bpm} {source} {time}, plus per event:
