@@ -61,7 +61,7 @@ baseline = 72
 
 
 [events]
-# When the reading counts as "stale" (signal lost) for Claude's tools.
+# When the reading counts as "stale" (signal lost) for the MCP tools.
 stale_after_seconds = 15
 # How long it must stay silent before a "disconnected" post (so a strap that
 # slips for a few seconds doesn't spam the channel).

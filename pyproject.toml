@@ -3,9 +3,9 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-heart-rate-bridge"
+name = "heart-rate-mcp"
 version = "0.1.0"
-description = "Let Claude see your heart rate: Pulsoid, HypeRate, Bluetooth, OSC and more, as an MCP server and Discord webhooks"
+description = "Let your AI see your heart rate: Pulsoid, HypeRate, Bluetooth, OSC and more, as an MCP server and Discord webhooks"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -16,8 +16,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/digi-the-robot/claude-heart-rate-bridge"
-Issues = "https://github.com/digi-the-robot/claude-heart-rate-bridge/issues"
+Homepage = "https://github.com/digi-the-robot/heart-rate-mcp"
+Issues = "https://github.com/digi-the-robot/heart-rate-mcp/issues"
 
 [project.optional-dependencies]
 ble = ["bleak>=0.22"]

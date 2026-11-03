@@ -316,7 +316,7 @@ def cmd_init(args) -> int:
 # ------------------------------------------------------------------------ main
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="hrbridge", description="Heart rate bridge for Claude (MCP + webhooks)")
+    parser = argparse.ArgumentParser(prog="hrbridge", description="Heart Rate MCP: MCP server + webhooks for your heart rate")
     parser.add_argument("--version", action="version", version=f"hrbridge {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -328,7 +328,7 @@ def main(argv: list[str] | None = None) -> None:
 
     p = add("run", "run the bridge daemon in the foreground")
     p.add_argument("--env-file", help=argparse.SUPPRESS)
-    p = add("mcp", "run the MCP server on stdio (what Claude clients launch)")
+    p = add("mcp", "run the MCP server on stdio (what MCP clients launch)")
     p.add_argument("--embedded", action="store_true", help="read the sensor in this process instead of the daemon")
     add("start", "start the daemon in the background")
     add("status", "show the running daemon's state")

@@ -1,10 +1,10 @@
-# Claude Heart Rate Bridge
+# Heart Rate MCP
 
-Let Claude see your heart rate, live, without VRChat or anything else in between.
+Let your AI see your heart rate, live. Works with Claude and any other MCP client, and with Discord bots through webhooks. No VRChat or other app needs to sit in between.
 
 ```
- Pulsoid ─┐                          ┌─► MCP server ──► Claude asks: "what's my heart rate?"
- HypeRate ┤                          │   (Claude Desktop, Claude Code, Discord bots…)
+ Pulsoid ─┐                          ┌─► MCP server ──► your AI asks: "what's my heart rate?"
+ HypeRate ┤                          │   (Claude Desktop, Claude Code, Cursor, Discord bots…)
  Bluetooth strap / watch ─┼─► bridge ┤
  OSC (VRChat-style apps) ─┤          ├─► Discord webhook ──► posts in a channel on its own
  phone / watch HTTP push ─┤          │   (bots in the channel just see it)
@@ -12,9 +12,9 @@ Let Claude see your heart rate, live, without VRChat or anything else in between
                                      └─► local API + live page / OBS overlay
 ```
 
-Two ways for Claude to see it, and you can use both at once:
+Two ways for your AI to see it, and you can use both at once:
 
-- **MCP server (pull).** Claude calls `heart_rate_now` whenever it wants to know.
+- **MCP server (pull).** The AI calls `heart_rate_now` whenever it wants to know.
 - **Discord webhook (push).** The bridge posts on its own when something happens: the sensor connects, a big change, crossing 100/120/140, a sudden spike, a periodic recap. A bot reading the channel sees it without calling anything.
 
 ## Supported heart rate sources
@@ -36,8 +36,8 @@ List several and they become fallbacks: `sources = ["ble", "pulsoid"]` uses the 
 Needs Python 3.10 or newer.
 
 ```bash
-git clone https://github.com/digi-the-robot/claude-heart-rate-bridge
-cd claude-heart-rate-bridge
+git clone https://github.com/digi-the-robot/heart-rate-mcp
+cd heart-rate-mcp
 pip install -r requirements.txt
 python run.py init          # creates config.toml from config.example.toml
 ```
@@ -52,7 +52,7 @@ python run.py check
 
 > Prefer a command? `pip install -e .` gives you `hrbridge run`, `hrbridge check`, etc. Every `python run.py X` below is the same as `hrbridge X`.
 
-## Connect Claude (MCP)
+## Connect your AI (MCP)
 
 The MCP server is `python run.py mcp`. Use the full path to `run.py`.
 
@@ -63,7 +63,7 @@ The MCP server is `python run.py mcp`. Use the full path to `run.py`.
   "mcpServers": {
     "heart-rate": {
       "command": "python",
-      "args": ["C:/path/to/claude-heart-rate-bridge/run.py", "mcp"]
+      "args": ["C:/path/to/heart-rate-mcp/run.py", "mcp"]
     }
   }
 }
@@ -72,14 +72,14 @@ The MCP server is `python run.py mcp`. Use the full path to `run.py`.
 **Claude Code**:
 
 ```bash
-claude mcp add heart-rate -- python /path/to/claude-heart-rate-bridge/run.py mcp
+claude mcp add heart-rate -- python /path/to/heart-rate-mcp/run.py mcp
 ```
 
-**Discord bots and other MCP clients** (llmcord and friends): add a stdio MCP server with command `python` and args `["/path/to/run.py", "mcp"]`.
+**Any other MCP client** (Cursor, Windsurf, Discord bots like llmcord…): add a stdio MCP server with command `python` and args `["/path/to/run.py", "mcp"]`.
 
 You can skip config.toml entirely for a simple setup and pass settings as environment variables in the MCP config, e.g. `"env": {"PULSOID_TOKEN": "..."}`. See [Environment variables](#environment-variables).
 
-### Tools Claude gets
+### Tools the AI gets
 
 | Tool | Returns |
 |---|---|
@@ -107,9 +107,9 @@ Example `heart_rate_now`:
 
 ### How it runs
 
-One small background process (the **daemon**) holds the sensor connection and sends the webhooks. Every MCP server, one per Claude client or bot, just asks the daemon. So five bots can share one chest strap, and Discord gets one post per event, not five.
+One small background process (the **daemon**) holds the sensor connection and sends the webhooks. Every MCP server, one per AI client or bot, just asks the daemon. So five bots can share one chest strap, and Discord gets one post per event, not five.
 
-You don't have to start the daemon yourself. The first MCP server to launch starts it, and it keeps running after that client closes. If you change the code or `config.toml`, the next MCP launch restarts it with the new settings. To run it by hand (e.g. for webhooks with no Claude client open):
+You don't have to start the daemon yourself. The first MCP server to launch starts it, and it keeps running after that client closes. If you change the code or `config.toml`, the next MCP launch restarts it with the new settings. To run it by hand (e.g. for webhooks with no AI client open):
 
 ```bash
 python run.py start     # in the background (keeps running after you close the window)
@@ -279,7 +279,7 @@ The config file is looked up in this order: `--config`, `HRBRIDGE_CONFIG`, `conf
 
 - **`python run.py status`** shows each source's state, e.g. `error: Pulsoid rejected the token (HTTP 401)`.
 - **Log file:** `hrbridge.log` next to your config.
-- **Claude says "no_data":** the `sources` line in `heart_rate_now` says why (waiting for the app, bad token, device not found…).
+- **The AI says "no_data":** the `sources` line in `heart_rate_now` says why (waiting for the app, bad token, device not found…).
 - **Port 47820 is taken:** set `[api] port` to something else. Every client uses the same config, so they'll all follow.
 
 ## Privacy

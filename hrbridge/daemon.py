@@ -1,7 +1,7 @@
 """Running the bridge as a background daemon, and talking to one that's running.
 
 One daemon owns the sensor connection and the webhooks; every MCP server (one
-per Claude client / bot) is a thin relay to it. That way five bots can read the
+per AI client / bot) is a thin relay to it. That way five bots can read the
 same chest strap, and Discord gets one post per event instead of five.
 """
 
@@ -98,7 +98,7 @@ def spawn_daemon(cfg: Config) -> None:
     command_line = subprocess.list2cmdline([str(exe), *args])
     # MCP clients built on the Python MCP SDK run servers inside a Windows Job
     # Object that kills every child when the client exits, so a normal child
-    # process would die with whichever Claude/bot started it. A process created
+    # process would die with whichever client/bot started it. A process created
     # through WMI lives outside that job.
     script = (
         "$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "

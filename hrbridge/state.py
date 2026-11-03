@@ -1,4 +1,4 @@
-"""Heart rate state: recent samples, per-source status, and the numbers Claude sees."""
+"""Heart rate state: recent samples, per-source status, and the numbers the AI sees."""
 
 from __future__ import annotations
 

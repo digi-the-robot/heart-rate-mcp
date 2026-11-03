@@ -1,4 +1,4 @@
-"""MCP server (stdio): lets Claude read the heart rate whenever it wants.
+"""MCP server (stdio): lets an AI client read the heart rate whenever it wants.
 
 By default it relays to the bridge daemon and starts one if none is running
 (mcp.daemon = "auto"). "embedded" runs the sources inside this process instead,
